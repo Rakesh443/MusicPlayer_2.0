@@ -6,4 +6,22 @@
     android:layout_height="match_parent"
     tools:context=".ExoplayerActivity">
 
+    <ImageView
+        android:id="@+id/image_view"
+        android:layout_width="341dp"
+        android:layout_height="378dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+         />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="246dp"
+        android:layout_height="33dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="@+id/image_view"
+        app:layout_constraintStart_toStartOf="@+id/image_view"
+        app:layout_constraintTop_toTopOf="@+id/image_view" />
 </androidx.constraintlayout.widget.ConstraintLayout>

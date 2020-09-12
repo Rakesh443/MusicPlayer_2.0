@@ -31,9 +31,17 @@ class MainActivity : AppCompatActivity() {
      var mediaPlayer: MediaPlayer? = null
     private var shuffeltoggle=false
 
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        var intent : String? = intent.getStringExtra("Phone")
+        if(intent=="call") {
+            pause()
+        }
         image_view.setImageResource(R.mipmap.ic_launcher_foreground)
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(
@@ -43,6 +51,8 @@ class MainActivity : AppCompatActivity() {
             )
 
         }
+
+
 
         var tabHost=findViewById<TabHost>(R.id.tabHost)
         tabHost.setup()
@@ -59,7 +69,7 @@ class MainActivity : AppCompatActivity() {
 
         var spec3 =tabHost.newTabSpec("Tab3")
         spec3.setContent(R.id.tab3)
-        spec3.setIndicator("Albums")
+        spec3.setIndicator("PlayList")
         tabHost.addTab(spec3)
 
 
@@ -110,7 +120,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         shuffel.setOnClickListener{
-            Toast.makeText(applicationContext, "$shuffeltoggle", Toast.LENGTH_SHORT).show()
+
             when{
                 shuffeltoggle -> {
                     shuffeltoggle=false
@@ -128,8 +138,8 @@ class MainActivity : AppCompatActivity() {
         seekBar.setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 if(p2) mediaPlayer?.seekTo(p1)
-                var t1= (mediaPlayer?.duration ?: 0) - mediaPlayer?.currentPosition!!
-                textView2.text=milliSecondsToSeconds(t1)
+
+                textView2.text= mediaPlayer?.duration?.let { milliSecondsToSeconds(it) }
                 textView3.text= mediaPlayer?.currentPosition?.let { milliSecondsToSeconds(it) }
 
             }
@@ -148,6 +158,12 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+    }
+
+    private fun pause() {
+        if(mediaPlayer?.isPlaying!!){
+            mediaPlayer?.pause()
+        }
     }
 
     fun milliSecondsToSeconds(ms:Int) : String{
@@ -195,8 +211,8 @@ class MainActivity : AppCompatActivity() {
     fun nextplay(songs: MusicFinder.Song) {
         //playOrPause()
 //        if(mediaPlayer==null) mediaPlayer=MediaPlayer.create(this,songs.uri)
-
-
+        songname.text=songs.title
+        playButton?.imageResource = R.drawable.ic_baseline_pause_24
         mediaPlayer?.reset()
         mediaPlayer = MediaPlayer.create(ctx, songs.uri)
         initialiseSeekbar()
