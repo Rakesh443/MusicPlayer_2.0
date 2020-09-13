@@ -21,7 +21,7 @@
         </activity>
         <activity android:name=".VideoActivity"></activity>
         <activity android:name=".ExoplayerActivity" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity" android:configChanges="orientation|screenSize|keyboardHidden">
 
         </activity>
         <receiver android:name=".Receiver" android:exported="true">

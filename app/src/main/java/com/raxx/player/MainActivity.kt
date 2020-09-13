@@ -1,18 +1,15 @@
 package com.raxx.player
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import android.media.MediaPlayer
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 
-import android.provider.MediaStore
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.TabHost
@@ -22,14 +19,19 @@ import androidx.core.app.ActivityCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.ctx
 import org.jetbrains.anko.imageResource
-import org.jetbrains.anko.toast
 import java.util.concurrent.TimeUnit
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity()  {
     var context = this
      var mediaPlayer: MediaPlayer? = null
     private var shuffeltoggle=false
+    var doubleBackToExitPressedOnce = false;
+    private val TIME_INTERVAL =
+        2000 // # milliseconds, desired time passed between two back presses.
+
+    private var mBackPressed: Long = 0
+
 
 
 
@@ -38,11 +40,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        var intent : String? = intent.getStringExtra("Phone")
-        if(intent=="call") {
-            pause()
+//        var intent : String? = intent.getStringExtra("Phone")
+//        if(intent=="call") {
+//            pause()
+//        }
+
+
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.O){
+            createChannel()
         }
+
         image_view.setImageResource(R.mipmap.ic_launcher_foreground)
+
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(
                 this,
@@ -160,10 +169,47 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun pause() {
-        if(mediaPlayer?.isPlaying!!){
-            mediaPlayer?.pause()
+    override fun onBackPressed() {
+        if (mBackPressed + TIME_INTERVAL > System.currentTimeMillis()) {
+            if (mediaPlayer!= null) {
+                if(mediaPlayer!!.isPlaying()) {
+                    mediaPlayer!!.stop();
+                }
+                mediaPlayer!!.release();
+                mediaPlayer= null;
+            }
+            super.onBackPressed()
+            return
+        } else {
+            Toast.makeText(baseContext, "Tap back button in order to exit", Toast.LENGTH_SHORT)
+                .show()
         }
+        mBackPressed = System.currentTimeMillis()
+    }
+
+
+
+
+    private fun createChannel() {
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.O){
+
+           var channel = NotificationChannel(CreateNotificatios().CHANNEL_ID,"IsmartApps",NotificationManager.IMPORTANCE_LOW)
+            var notificationManager=getSystemService(NotificationManager::class.java)
+            if(notificationManager!=null){
+                notificationManager.createNotificationChannel(channel)
+            }
+        }
+    }
+
+    private fun pause(songs: MusicFinder.Song) {
+        var swipe=false
+
+            if (mediaPlayer!!.isPlaying()) {
+                swipe = true
+            }
+
+
+        CreateNotificatios(this,songs,R.drawable.ic_baseline_play_arrow_24,1,swipe)
     }
 
     fun milliSecondsToSeconds(ms:Int) : String{
@@ -209,8 +255,12 @@ class MainActivity : AppCompatActivity() {
 
     }
     fun nextplay(songs: MusicFinder.Song) {
+
+
+
         //playOrPause()
 //        if(mediaPlayer==null) mediaPlayer=MediaPlayer.create(this,songs.uri)
+
         songname.text=songs.title
         playButton?.imageResource = R.drawable.ic_baseline_pause_24
         mediaPlayer?.reset()
@@ -220,7 +270,7 @@ class MainActivity : AppCompatActivity() {
             nextButton.callOnClick()
         }
         mediaPlayer?.start()
-
+        pause(songs)
 
     }
     fun playOrPause(){
