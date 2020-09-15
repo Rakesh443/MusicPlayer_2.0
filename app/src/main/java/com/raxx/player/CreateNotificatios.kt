@@ -1,6 +1,8 @@
 package com.raxx.player
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -18,6 +20,8 @@ open class CreateNotificatios {
 
     constructor(context: Context, songs: MusicFinder.Song, playButton:Int, position: Int,swipe:Boolean){
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
+            var activityIntent=Intent(context,MainActivity::class.java)
+            var contentIntent = PendingIntent.getActivity(context,0,activityIntent,0)
             var notificationManagerCompat =NotificationManagerCompat.from(context)
 
             var mediaSessionCompact=MediaSessionCompat(context,"tag")
@@ -31,6 +35,7 @@ open class CreateNotificatios {
                 .setOnlyAlertOnce(true)
                 .setShowWhen(false)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setContentIntent(contentIntent)
                 .setOngoing(swipe)
                 .build()
 

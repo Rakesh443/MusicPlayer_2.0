@@ -5,10 +5,15 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.PersistableBundle
 
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
@@ -19,6 +24,9 @@ import androidx.core.app.ActivityCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.ctx
 import org.jetbrains.anko.imageResource
+import org.jetbrains.anko.notificationManager
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
 
@@ -29,9 +37,9 @@ class MainActivity : AppCompatActivity()  {
     var doubleBackToExitPressedOnce = false;
     private val TIME_INTERVAL =
         2000 // # milliseconds, desired time passed between two back presses.
-
+    var swipe=false
     private var mBackPressed: Long = 0
-
+    lateinit var track:MusicFinder.Song
 
 
 
@@ -39,6 +47,7 @@ class MainActivity : AppCompatActivity()  {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
 
 //        var intent : String? = intent.getStringExtra("Phone")
 //        if(intent=="call") {
@@ -51,7 +60,7 @@ class MainActivity : AppCompatActivity()  {
         }
 
         image_view.setImageResource(R.mipmap.ic_launcher_foreground)
-
+        playButton.isEnabled=false
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(
                 this,
@@ -87,6 +96,7 @@ class MainActivity : AppCompatActivity()  {
 
         val songFinder = MusicFinder(contentResolver)
         songFinder.prepare()
+
         val songs = songFinder.allSongs
         val i = songs.size
         var j=0
@@ -99,6 +109,7 @@ class MainActivity : AppCompatActivity()  {
         songlist_view.setOnItemClickListener{ songlist_view, view, position: Int, id: Long->nextplay(
             songs[position]
         )}
+        track=songs[0]
 
 
 
@@ -169,6 +180,9 @@ class MainActivity : AppCompatActivity()  {
         })
     }
 
+
+
+
     override fun onBackPressed() {
         if (mBackPressed + TIME_INTERVAL > System.currentTimeMillis()) {
             if (mediaPlayer!= null) {
@@ -178,6 +192,7 @@ class MainActivity : AppCompatActivity()  {
                 mediaPlayer!!.release();
                 mediaPlayer= null;
             }
+            notificationManager.cancel(1)
             super.onBackPressed()
             return
         } else {
@@ -201,15 +216,15 @@ class MainActivity : AppCompatActivity()  {
         }
     }
 
-    private fun pause(songs: MusicFinder.Song) {
-        var swipe=false
-
-            if (mediaPlayer!!.isPlaying()) {
-                swipe = true
-            }
+    private fun pause(songs: MusicFinder.Song,flag:Boolean) {
 
 
-        CreateNotificatios(this,songs,R.drawable.ic_baseline_play_arrow_24,1,swipe)
+//            if (mediaPlayer!!.isPlaying()) {
+//                swipe = true
+//            }
+
+
+        CreateNotificatios(this,songs,R.drawable.ic_baseline_play_arrow_24,1,flag)
     }
 
     fun milliSecondsToSeconds(ms:Int) : String{
@@ -255,12 +270,20 @@ class MainActivity : AppCompatActivity()  {
 
     }
     fun nextplay(songs: MusicFinder.Song) {
-
-
-
+//        var mmr = MediaMetadataRetriever()
+//        mmr.setDataSource(songs.uri.encodedPath)
+//        var inputStream: InputStream? =null
+//        if(mmr.embeddedPicture!=null) {
+//            inputStream = ByteArrayInputStream(mmr.embeddedPicture)
+//        }
+//        mmr.release()
+//        var bitmap=BitmapFactory.decodeStream(inputStream)
+//        var  d = BitmapDrawable(bitmap)
+//        image_view.setImageBitmap(bitmap)
+        playButton.isEnabled=true
         //playOrPause()
 //        if(mediaPlayer==null) mediaPlayer=MediaPlayer.create(this,songs.uri)
-
+        track=songs
         songname.text=songs.title
         playButton?.imageResource = R.drawable.ic_baseline_pause_24
         mediaPlayer?.reset()
@@ -270,18 +293,21 @@ class MainActivity : AppCompatActivity()  {
             nextButton.callOnClick()
         }
         mediaPlayer?.start()
-        pause(songs)
+        pause(songs,true)
 
     }
     fun playOrPause(){
         var songPlaying:Boolean? = mediaPlayer?.isPlaying
         playButton?.imageResource = R.drawable.ic_baseline_pause_24
         if(songPlaying == true){
+
             mediaPlayer?.pause()
+            pause(track,false)
             playButton?.imageResource = R.drawable.ic_baseline_play_arrow_24
         }
         else{
             mediaPlayer?.start()
+            pause(track,true)
             playButton?.imageResource = R.drawable.ic_baseline_pause_24
 
         }
