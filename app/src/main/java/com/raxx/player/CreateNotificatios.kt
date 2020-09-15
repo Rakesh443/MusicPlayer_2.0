@@ -21,6 +21,7 @@ open class CreateNotificatios {
     constructor(context: Context, songs: MusicFinder.Song, playButton:Int, position: Int,swipe:Boolean){
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
             var activityIntent=Intent(context,MainActivity::class.java)
+            
             var contentIntent = PendingIntent.getActivity(context,0,activityIntent,0)
             var notificationManagerCompat =NotificationManagerCompat.from(context)
 
