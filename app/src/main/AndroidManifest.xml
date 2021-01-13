@@ -2,8 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.raxx.player">
 
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
 
     <application
         android:allowBackup="true"
@@ -19,17 +20,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".VideoActivity"></activity>
-        <activity android:name=".ExoplayerActivity" />
-        <activity android:name=".MainActivity">
+
+        <activity android:name=".MainActivity" android:configChanges="orientation|screenSize|keyboardHidden"
+            android:launchMode="singleInstance">
 
         </activity>
-        <receiver android:name=".Receiver" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PHONE_STATE"></action>
-            </intent-filter>
 
-        </receiver>
     </application>
 
 </manifest>

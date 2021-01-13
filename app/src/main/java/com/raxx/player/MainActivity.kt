@@ -1,48 +1,70 @@
 package com.raxx.player
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
+import android.app.NotificationChannel
+import android.app.NotificationManager
+
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
+
 import android.media.MediaPlayer
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 
-import android.provider.MediaStore
-import android.view.View
+
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.TabHost
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.ctx
 import org.jetbrains.anko.imageResource
-import org.jetbrains.anko.toast
+import org.jetbrains.anko.notificationManager
+
 import java.util.concurrent.TimeUnit
 
 
-class MainActivity : AppCompatActivity() {
+
+class MainActivity : AppCompatActivity()  {
     var context = this
      var mediaPlayer: MediaPlayer? = null
     private var shuffeltoggle=false
+    var doubleBackToExitPressedOnce = false;
+    private val TIME_INTERVAL =
+        2000 // # milliseconds, desired time passed between two back presses.
+    var swipe=false
+    private var mBackPressed: Long = 0
+    lateinit var track:MusicFinder.Song
+    var j=0
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+
+
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.O){
+            createChannel()
+        }
+
         image_view.setImageResource(R.mipmap.ic_launcher_foreground)
+        playButton.isEnabled=false
         if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 0
             )
 
         }
+
+
 
         var tabHost=findViewById<TabHost>(R.id.tabHost)
         tabHost.setup()
@@ -59,7 +81,7 @@ class MainActivity : AppCompatActivity() {
 
         var spec3 =tabHost.newTabSpec("Tab3")
         spec3.setContent(R.id.tab3)
-        spec3.setIndicator("Albums")
+        spec3.setIndicator("PlayList")
         tabHost.addTab(spec3)
 
 
@@ -68,18 +90,31 @@ class MainActivity : AppCompatActivity() {
 
         val songFinder = MusicFinder(contentResolver)
         songFinder.prepare()
+
         val songs = songFinder.allSongs
         val i = songs.size
-        var j=0
+
         val list1= mutableListOf<String>()
+
         for(song in songs){list1.add(song.title)}
 
+        if(list1.isNotEmpty()){
+            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, list1)
+            songlist_view.adapter = adapter
+            songlist_view.setOnItemClickListener{ songlist_view, view, position: Int, id: Long->nextplay(
+                songs[position]
+            )
+                j=position}
+            track=songs[0]
+
+        }
+        else{
+            list1.add("       No Songs Found                ")
+            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, list1)
+            songlist_view.adapter = adapter
+        }
         // Display external storage music files list on list view
-        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, list1)
-        songlist_view.adapter = adapter
-        songlist_view.setOnItemClickListener{ songlist_view, view, position: Int, id: Long->nextplay(
-            songs[position]
-        )}
+
 
 
 
@@ -92,12 +127,13 @@ class MainActivity : AppCompatActivity() {
 
                 nextplay(songs.random())
             }
-           else {
-                if (j <= i) {
-                    j++
-                } else j = 0
-                nextplay(songs[j])
-            }
+
+            if (j < i-1) {
+
+                j++
+            } else j = 0
+            nextplay(songs[j])
+
         }
         backButton2.setOnClickListener{
             when {
@@ -110,7 +146,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         shuffel.setOnClickListener{
-            Toast.makeText(applicationContext, "$shuffeltoggle", Toast.LENGTH_SHORT).show()
+
             when{
                 shuffeltoggle -> {
                     shuffeltoggle=false
@@ -128,8 +164,8 @@ class MainActivity : AppCompatActivity() {
         seekBar.setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 if(p2) mediaPlayer?.seekTo(p1)
-                var t1= (mediaPlayer?.duration ?: 0) - mediaPlayer?.currentPosition!!
-                textView2.text=milliSecondsToSeconds(t1)
+
+                textView2.text= mediaPlayer?.duration?.let { milliSecondsToSeconds(it) }
                 textView3.text= mediaPlayer?.currentPosition?.let { milliSecondsToSeconds(it) }
 
             }
@@ -150,25 +186,61 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+
+
+
+    override fun onBackPressed() {
+        if (mBackPressed + TIME_INTERVAL > System.currentTimeMillis()) {
+            if (mediaPlayer!= null) {
+                if(mediaPlayer!!.isPlaying()) {
+                    mediaPlayer!!.stop();
+                }
+                mediaPlayer!!.release();
+                mediaPlayer= null;
+            }
+            notificationManager.cancel(1)
+            super.onBackPressed()
+            return
+        } else {
+            Toast.makeText(baseContext, "Tap back button in order to exit", Toast.LENGTH_SHORT)
+                .show()
+        }
+        mBackPressed = System.currentTimeMillis()
+    }
+
+
+
+
+    private fun createChannel() {
+        if(Build.VERSION.SDK_INT>= Build.VERSION_CODES.O){
+
+           var channel = NotificationChannel(CreateNotificatios().CHANNEL_ID,"IsmartApps",NotificationManager.IMPORTANCE_LOW)
+            var notificationManager=getSystemService(NotificationManager::class.java)
+            if(notificationManager!=null){
+                notificationManager.createNotificationChannel(channel)
+            }
+        }
+    }
+
+    private fun pause(songs: MusicFinder.Song,flag:Boolean) {
+
+
+
+        CreateNotificatios(this,songs,R.drawable.ic_baseline_play_arrow_24,1,flag)
+    }
+
     fun milliSecondsToSeconds(ms:Int) : String{
 
         var sec= TimeUnit.MILLISECONDS.toSeconds(ms.toLong())
         var min = TimeUnit.SECONDS.toMinutes(sec)
-        sec=sec%60
-        return "$min : $sec"
+        sec %= 60
+        var sec2:String=sec.toString()
+        if (sec<10){
+            sec2="0$sec"
+        }
+        return "$min : $sec2"
     }
 
-//    inner class UpdateSeekBarProgressThread : Runnable{
-//        override fun run() {
-//            var currentTym= mediaPlayer?.currentPosition
-//            if (currentTym != null) {
-//                seekBar.progress=currentTym
-//            }
-//            if(currentTym!= mediaPlayer?.duration) handler.postDelayed(this,50)
-//
-//        }
-//
-//    }
 
     private fun  initialiseSeekbar(){
 
@@ -193,10 +265,12 @@ class MainActivity : AppCompatActivity() {
 
     }
     fun nextplay(songs: MusicFinder.Song) {
-        //playOrPause()
-//        if(mediaPlayer==null) mediaPlayer=MediaPlayer.create(this,songs.uri)
 
+        playButton.isEnabled=true
 
+        track=songs
+        songname.text=songs.title
+        playButton?.imageResource = R.drawable.ic_baseline_pause_24
         mediaPlayer?.reset()
         mediaPlayer = MediaPlayer.create(ctx, songs.uri)
         initialiseSeekbar()
@@ -204,26 +278,30 @@ class MainActivity : AppCompatActivity() {
             nextButton.callOnClick()
         }
         mediaPlayer?.start()
-
+        pause(songs,true)
 
     }
     fun playOrPause(){
         var songPlaying:Boolean? = mediaPlayer?.isPlaying
         playButton?.imageResource = R.drawable.ic_baseline_pause_24
         if(songPlaying == true){
+
             mediaPlayer?.pause()
+            pause(track,false)
             playButton?.imageResource = R.drawable.ic_baseline_play_arrow_24
         }
         else{
             mediaPlayer?.start()
+            pause(track,true)
             playButton?.imageResource = R.drawable.ic_baseline_pause_24
 
         }
     }
 
-
-
-
-
+    override fun finish() {
+        mediaPlayer?.pause()
+        notificationManager.cancel(1)
+        super.finish()
+    }
 
 }

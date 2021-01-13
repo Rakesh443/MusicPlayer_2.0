@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".VideoActivity"
     android:background="@drawable/loginbackground">
 
     <TabHost
@@ -49,12 +48,14 @@
 
                 </LinearLayout>
 
-                <LinearLayout
+                <RelativeLayout
                     android:id="@+id/tab2"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:tooltipText="Tab2">
+
+
 
                     <ImageView
                         android:id="@+id/image_view"
@@ -64,22 +65,40 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
+                    <TextView
+                        android:id="@+id/songname"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Song Name"
+                        android:ellipsize="marquee"
+                        android:marqueeRepeatLimit ="marquee_forever"
+                        android:focusable="true"
+
+                        android:focusableInTouchMode="true"
+                        android:scrollHorizontally="true"
+                        android:singleLine="true"
+                        android:layout_alignParentBottom="true"
+                        android:textStyle="italic"
+                        android:paddingBottom="4dp"
+                        android:textAlignment="center"
+
+                        android:textSize="20dp"/>
 
 
-                </LinearLayout>
+                </RelativeLayout>
 
                 <LinearLayout
                     android:id="@+id/tab3"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
-                    android:tooltipText="Tab3">
+                    android:tooltipText="IsmartPlayer">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="Tab3" />
+                         />
 
 
                 </LinearLayout>
@@ -99,7 +118,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/loginbuttonbackground"
+            android:background="@drawable/ripple_effect"
             app:srcCompat="@android:drawable/ic_media_previous" />
 
         <ImageButton

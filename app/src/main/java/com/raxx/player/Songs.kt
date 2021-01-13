@@ -2,7 +2,7 @@ package com.raxx.player
 
 import android.net.Uri
 
-class Songs {
+class ongs {
     var aPath: String? = null
     var aName: String? = null
     var aAlbum: String? = null

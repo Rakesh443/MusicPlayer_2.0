@@ -27,6 +27,7 @@ class MusicFinder(val contentResolver: ContentResolver) {
         val albumArtColumn = cur.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
         val durationColumn = cur.getColumnIndex(MediaStore.Audio.Media.DURATION)
         val idColumn = cur.getColumnIndex(MediaStore.Audio.Media._ID)
+
         do {
             mSongs.add(
                 Song(
@@ -36,6 +37,7 @@ class MusicFinder(val contentResolver: ContentResolver) {
                     cur.getString(albumColumn),
                     cur.getLong(durationColumn),
                     cur.getLong(albumArtColumn)
+
                 )
             )
         } while (cur.moveToNext())
@@ -61,6 +63,7 @@ class MusicFinder(val contentResolver: ContentResolver) {
         var album: String,
         var duration: Long,
         var albumId: Long
+
     ) {
         val uri: Uri
             get() = ContentUris.withAppendedId(
